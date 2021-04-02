@@ -9,9 +9,13 @@ def get_url(url):
       Input: url to the webpage
       Output: Parsed HTML text of the webpage
     """
-    # Send GET request
+    page_num = 1
+    url += '&page={page_num}'
     r = requests.get(url)
 
     # Parse HTML text
     soup = BeautifulSoup(r.text, 'html.parser')
     return soup
+
+def get_products(url):
+
