@@ -21,8 +21,7 @@ def get_url(url):
     soup = bs(r.text, 'html.parser')
     return soup
 
-def get_products(url=INTERNATIONAL_GOODS_URL):
-    page_num = 1
+def get_page(url=INTERNATIONAL_GOODS_URL,page_num=1):
     url += f'&page={page_num}'
     print(url)
     product_page = get_url(url)
@@ -30,8 +29,19 @@ def get_products(url=INTERNATIONAL_GOODS_URL):
     products = product_page.find_all('a',{'class':'product-item'})
     return products
 
+def get_all_pages(url=INTERNATIONAL_GOODS_URL):
+    prod = get_page()
+    products = [prod]
+    page_n = 2
+    while len(prod)>0:
+        prod = get_page(page_num=page_n)
+        products.extend(prod)
+        page_n += 1
+    
+    return products
+
 
 
 ### Check if this script is run by itself (compared to being imported)
 if __name__ == '__main__':
-    print(get_products())
+    print(len(get_all_pages()))
