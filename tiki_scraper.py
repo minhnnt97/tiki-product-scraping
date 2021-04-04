@@ -13,6 +13,8 @@ from webdriver_manager.chrome import ChromeDriverManager
 
 ### GLOBALS ###
 HEADER = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/70.0.3538.77 Safari/537.36'}
+
+# URLS
 URL_TIKI = 'https://tiki.vn'
 URL_SMART_DEVICES = URL_TIKI + '/dien-thoai-may-tinh-bang/c1789?'
 URL_INTERNATIONAL_GOODS = URL_TIKI + '/hang-quoc-te/c17166?'
@@ -43,7 +45,7 @@ def get_url(url):
     return soup
 
 
-def get_page(url=URL_INTERNATIONAL_GOODS, page_num=1):
+def get_page(url, page_num=1):
     '''
     Scrape for products on one page.
 
@@ -52,7 +54,7 @@ def get_page(url=URL_INTERNATIONAL_GOODS, page_num=1):
     Output: a list of HTML element of each product.
     '''
     page_url = url + f'page={page_num}'
-    print(page_url)
+    print('Scraping', page_url)
     product_page = get_url(page_url)
     
     tags = [ 'a',
@@ -72,21 +74,79 @@ def get_product_info(product):
     '''
     product_info = {}
 
-    product_info['Product URL'] = URL_TIKI + product['href']
+    # Product URL
+    if product['href'][:2] == '//':
+        product_info['Product URL'] = 'https:' + product['href']
+    else:
+        product_info['Product URL'] = URL_TIKI + product['href']
 
-    product_info['Image URL'] = product.find('div',{'class':'thumbnail'}).img['src']
+    # Image URL
+    thumbnail = product.find('div',{'class':'thumbnail'})
+    product_info['Image URL'] = thumbnail.img['src']
+    
+    # Freeship?
+    item_top = thumbnail.span
+    if item_top and item_top.text == 'Freeship':
+        product_info['Freeship'] = 'Yes'
+    else:
+        product_info['Freeship'] = 'No'
 
-    product_info['Product ID'] = re.search(r'.+-p(\d+).html.*', product['href']).group(1)
+    # Product ID
+    product_info['Product ID'] = int(re.search(r'.+-p(\d+).html.*', product['href']).group(1))
 
+    # Name
     product_info['Name'] = product.find('div', {'class','name'}).span.text
 
-    price = product.find('div', {'class','price-discount__price'}).text
-    product_info['Price'] = ''.join(re.findall(r'\d+',price))
+    # Price
+    price = product.find('div',{'class','price-discount__price'}).text
+    product_info['Price'] = int(''.join(re.findall(r'\d+',price)))
+
+    # Discount percent
+    discount = product.find('div', {'class','price-discount__discount'})
+    if discount:
+        product_info['Discount Percentage'] = int(re.search(r'(\d+)',discount.text).group(0))
+    else:
+        product_info['Discount Percentage'] = 0
+
+    # Ratings & Reviews
+    rating_review = product.find('div',{'class','rating-review'})
+    if rating_review:
+        rating = rating_review.find('div',{'class','rating__average'})
+        product_info['Rating'] = int(re.search(r'^width: (\d+)%;$',rating['style']).group(1))
+
+        review = rating_review.find('div',{'class','review'})
+        product_info['Reviews'] = int(re.search(r'(\d+)',review.text).group(0))
+    else:
+        product_info['Rating'] = 0
+        product_info['Reviews'] = 0
+
+
+    # Badge under price
+    under_price = product.find('div', {'class':'badge-under-price'}).div
+    if under_price:
+        product_info['Badge Under Price'] = 'Yes'
+    else:
+        product_info['Badge Under Price'] = 'No'
+
+    # Paid by installments
+    installments = product.find('div', {'class':'badge-benefits'}).img
+    if installments:
+        product_info['Paid by Installments'] = 'Yes'
+    else:
+        product_info['Paid by Installments'] = 'No'
+
+    # Free Gifts
+    free_gifts = product.find('div', {'class':'freegift-list'})
+    if free_gifts:
+        product_info['Free Gifts'] = 'Yes'
+    else:
+        product_info['Free Gifts'] = 'No'
+
 
     return product_info
 
 
-def get_multiple_pages(url=URL_INTERNATIONAL_GOODS, max_page=0):
+def get_multiple_pages(url, max_page=0):
     '''
     Scrape for multiple pages of products of a category.
     Uses get_page() and get_product_info().
@@ -114,7 +174,10 @@ def get_multiple_pages(url=URL_INTERNATIONAL_GOODS, max_page=0):
 
 ### Check if this script is run by itself (compared to being imported)
 if __name__ == '__main__':
-    prod_data = get_multiple_pages(url=URL_SMART_DEVICES)
+    num_max_page = 5
+    my_url = URL_INTERNATIONAL_GOODS
+
+    prod_data = get_multiple_pages(url=my_url, max_page=num_max_page)
     df = pd.DataFrame(data=prod_data, columns=prod_data[0].keys())
     df.to_csv('tiki_products_data_table.csv')
 
