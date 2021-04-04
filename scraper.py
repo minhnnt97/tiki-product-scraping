@@ -86,26 +86,25 @@ def get_product_info(product):
     return product_info
 
 
-# HAVEN'T TESTED THIS YET
 def get_multiple_pages(url=URL_INTERNATIONAL_GOODS, max_page=0):
     '''
     Scrape for multiple pages of products of a category.
-    Uses the function get_page() for each page.
+    Uses get_page() and get_product_info().
 
-    Input: url string of a category
-    Output: a dictionary with format { page_number : get_page(url,page_number) }
+    Input:  url: (string) a url string of a category
+            max_page: (int) an integer denoting the maximum number of pages to scrape.
+                      Default value is 0 to scrape all pages.
+    Output: a list in which every element is a dictionary of one product's information
     '''
     products = []
 
     page_n = 1
-    stop_flag = False if max_page == 0 else page_n > max_page
-    
     prod_list = get_page(url=url, page_num=page_n)
 
     while len(prod_list)>0:
         products.extend([get_product_info(prod) for prod in prod_list])
         page_n += 1
-        stop_flag = False if max_page == 0 else page_n > max_page
+        stop_flag = False if max_page <= 0 else page_n > max_page # For stopping the scrape according to max_page
         if stop_flag:
             break
         prod_list = get_page(url=url, page_num=page_n)
@@ -115,17 +114,8 @@ def get_multiple_pages(url=URL_INTERNATIONAL_GOODS, max_page=0):
 
 ### Check if this script is run by itself (compared to being imported)
 if __name__ == '__main__':
-    # page_n = rd.randint(1,5)
-    # prod_n = rd.randint(1,5)
-    # prod_page = get_page(url=URL_SMART_DEVICES, page_num=page_n)
-    
-    #print(prod_page)
-    #print(get_product_info(prod_page))
     prod_data = get_multiple_pages(url=URL_SMART_DEVICES)
     df = pd.DataFrame(data=prod_data, columns=prod_data[0].keys())
     df.to_csv('tiki_products_data_table.csv')
-
-    #list_of_products = get_all_pages(url=URL_SMART_DEVICES)
-    #print(list_of_products)
 
 
