@@ -8,7 +8,7 @@ These are the highest and lowest prices respectively:
 This is the average price:
 ![average price](https://github.com/Nanakuro/tiki-product-scraping/blob/master/images/avg_price.png)
 
-This is the product with the most reviews:
+This is the product with the most reviews:\
 ![Xiaomi Jordan](https://salt.tikicdn.com/cache/280x280/ts/product/c4/f5/02/3ef8400785c0580626a54a2f74a0d601.jpg)
 ![most reviews](https://github.com/Nanakuro/tiki-product-scraping/blob/master/images/reviews.png)
 
