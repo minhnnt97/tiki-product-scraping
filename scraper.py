@@ -35,7 +35,7 @@ def get_url(url):
 
     driver = webdriver.Chrome('chromedriver',options=options)
     driver.implicitly_wait(30)
-    time.sleep(rd.randint(4,6))
+    time.sleep(rd.randint(4,6)) # Not sure if this line is needed anymore
     driver.get(url)
     
     soup = bs(driver.page_source,'html.parser')
@@ -62,46 +62,70 @@ def get_page(url=URL_INTERNATIONAL_GOODS, page_num=1):
     return products
 
 
+# Might expand this for a list of products
 def get_product_info(product):
+    '''
+    Extract information from an html element of one product tag.
+
+    Input: a BeautifulSoup object of the product tag
+    Output: a dictionary of the information of the products
+    '''
     product_info = {}
 
-    product_info['product_url'] = URL_TIKI + product['href']
-    product_info['name'] = product.find('div', {'class','name'}).span.text
-    product_info['image_url'] = product.find('img',{'alt':product_info['name']})['src']
+    product_info['Product URL'] = URL_TIKI + product['href']
+
+    product_info['Image URL'] = product.find('div',{'class':'thumbnail'}).img['src']
+
+    product_info['Product ID'] = re.search(r'.+-p(\d+).html.*', product['href']).group(1)
+
+    product_info['Name'] = product.find('div', {'class','name'}).span.text
+
     price = product.find('div', {'class','price-discount__price'}).text
-    product_info['price'] = ''.join(re.findall(r'\d+',price))
+    product_info['Price'] = ''.join(re.findall(r'\d+',price))
 
     return product_info
 
 
 # HAVEN'T TESTED THIS YET
-def get_all_pages(url=URL_INTERNATIONAL_GOODS):
+def get_multiple_pages(url=URL_INTERNATIONAL_GOODS, max_page=0):
     '''
     Scrape for multiple pages of products of a category.
     Uses the function get_page() for each page.
 
-    Input: url: (string) url of a category
+    Input: url string of a category
     Output: a dictionary with format { page_number : get_page(url,page_number) }
     '''
-    page_n = 1
-    prod = get_page(page_num=page_n)
-    products = {}
+    products = []
 
-    while len(prod)>0:
-        products[page_n] = prod
+    page_n = 1
+    stop_flag = False if max_page == 0 else page_n > max_page
+    
+    prod_list = get_page(url=url, page_num=page_n)
+
+    while len(prod_list)>0:
+        products.extend([get_product_info(prod) for prod in prod_list])
         page_n += 1
-        prod = get_page(page_num=page_n)
+        stop_flag = False if max_page == 0 else page_n > max_page
+        if stop_flag:
+            break
+        prod_list = get_page(url=url, page_num=page_n)
     
     return products
 
 
 ### Check if this script is run by itself (compared to being imported)
 if __name__ == '__main__':
-    page_n = rd.randint(1,5)
-    prod_n = rd.randint(1,5)
-    prod_page = get_page(url=URL_SMART_DEVICES, page_num=page_n)[prod_n]
+    # page_n = rd.randint(1,5)
+    # prod_n = rd.randint(1,5)
+    # prod_page = get_page(url=URL_SMART_DEVICES, page_num=page_n)
     
-    print(prod_page)
-    print(get_product_info(prod_page))
+    #print(prod_page)
+    #print(get_product_info(prod_page))
+    prod_data = get_multiple_pages(url=URL_SMART_DEVICES)
+    df = pd.DataFrame(data=prod_data, columns=prod_data[0].keys())
+    df.to_csv('tiki_products_data_table.csv')
+
+    #list_of_products = get_all_pages(url=URL_SMART_DEVICES)
+    #print(list_of_products)
 
 

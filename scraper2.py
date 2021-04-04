@@ -1,7 +1,3 @@
-!pip install selenium
-!apt install chromium-chromedriver
-!cp /usr/lib/chromium-browser/chromedriver /usr/bin
-!pip install webdriver-manager
 from selenium import webdriver
 from webdriver_manager.chrome import ChromeDriverManager
 # Set driver for Chrome
