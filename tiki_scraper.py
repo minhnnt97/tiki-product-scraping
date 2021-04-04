@@ -181,4 +181,8 @@ if __name__ == '__main__':
     df = pd.DataFrame(data=prod_data, columns=prod_data[0].keys())
     df.to_csv('tiki_products_data_table.csv')
 
-
+# to_csv function
+def to_csv(my_url = URL_INTERNATIONAL_GOODS, num_max_page = 5, name='tiki_products_data_table.csv'):
+  prod_data = get_multiple_pages(url=my_url, max_page=num_max_page)
+  df = pd.DataFrame(data=prod_data, columns=prod_data[0].keys())
+  df.to_csv(name)
