@@ -84,6 +84,12 @@ def get_product_info(product):
     thumbnail = product.find('div',{'class':'thumbnail'})
     product_info['Image URL'] = thumbnail.img['src']
     
+    # Name
+    product_info['Name'] = product.find('div', {'class','name'}).span.text
+
+    # Product ID
+    product_info['Product ID'] = int(re.search(r'.+-p(\d+).html.*', product['href']).group(1))
+
     # Freeship?
     item_top = thumbnail.span
     if item_top and item_top.text == 'Freeship':
@@ -91,15 +97,9 @@ def get_product_info(product):
     else:
         product_info['Freeship'] = 'No'
 
-    # Product ID
-    product_info['Product ID'] = int(re.search(r'.+-p(\d+).html.*', product['href']).group(1))
-
-    # Name
-    product_info['Name'] = product.find('div', {'class','name'}).span.text
-
     # Price
     price = product.find('div',{'class','price-discount__price'}).text
-    product_info['Price'] = int(''.join(re.findall(r'\d+',price)))
+    product_info['Price (VND)'] = int(''.join(re.findall(r'\d+',price)))
 
     # Discount percent
     discount = product.find('div', {'class','price-discount__discount'})
@@ -112,9 +112,9 @@ def get_product_info(product):
     rating_review = product.find('div',{'class','rating-review'})
     try:
         rating = rating_review.find('div',{'class','rating__average'})
-        product_info['Rating'] = (int(re.search(r'^width: (\d+)%;$',rating['style']).group(1))/100)*5
+        product_info['Rating'] = int(re.search(r'(\d+)',rating['style']).group(0))/100*5
     except:
-        product_info['Rating'] = 0 
+        product_info['Rating'] = 0
 
     try:
         review = rating_review.find('div',{'class','review'})
@@ -173,6 +173,13 @@ def get_multiple_pages(url, max_page=0):
     return products
 
 
+# to_csv function
+def make_csv(my_url = URL_INTERNATIONAL_GOODS, num_max_page = 5, name='tiki_products_data_table.csv'):
+    prod_data = get_multiple_pages(url=my_url, max_page=num_max_page)
+    df = pd.DataFrame(data=prod_data, columns=prod_data[0].keys())
+    df.to_csv(name)
+
+
 ### Check if this script is run by itself (compared to being imported)
 if __name__ == '__main__':
     num_max_page = 5
@@ -182,8 +189,3 @@ if __name__ == '__main__':
     df = pd.DataFrame(data=prod_data, columns=prod_data[0].keys())
     df.to_csv('tiki_products_data_table.csv')
 
-# to_csv function
-def to_csv(my_url = URL_INTERNATIONAL_GOODS, num_max_page = 5, name='tiki_products_data_table.csv'):
-  prod_data = get_multiple_pages(url=my_url, max_page=num_max_page)
-  df = pd.DataFrame(data=prod_data, columns=prod_data[0].keys())
-  df.to_csv(name)
