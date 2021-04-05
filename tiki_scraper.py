@@ -110,15 +110,15 @@ def get_product_info(product):
 
     # Ratings & Reviews
     rating_review = product.find('div',{'class','rating-review'})
-    if rating_review:
+    try:
         rating = rating_review.find('div',{'class','rating__average'})
-        product_info['Rating'] = int(re.search(r'^width: (\d+)%;$',rating['style']).group(1))
+        product_info['Rating'] = int(re.search(r'(\d+)',rating['style']).group(0))
 
         review = rating_review.find('div',{'class','review'})
         product_info['Reviews'] = int(re.search(r'(\d+)',review.text).group(0))
-    else:
-        product_info['Rating'] = 0
-        product_info['Reviews'] = 0
+    except:
+      product_info['Rating'] = 0
+      product_info['Reviews'] = 0
 
 
     # Badge under price
