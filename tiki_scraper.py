@@ -20,6 +20,14 @@ URL_SMART_DEVICES = URL_TIKI + '/dien-thoai-may-tinh-bang/c1789?'
 URL_INTERNATIONAL_GOODS = URL_TIKI + '/hang-quoc-te/c17166?'
 
 
+###### PRODUCT CLASS ######
+class Product:
+    def __init__(self):
+        pass
+    
+
+
+
 ### FUNCTIONS ###
 def get_url(url):
     """
