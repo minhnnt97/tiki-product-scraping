@@ -153,7 +153,7 @@ class Category:
                 return Category(**main_cat)
 
 
-    def get_product_info(self, max_page=0):
+    def get_product_info(self, max_page=0, save=False):
         """ Extract info from all products of a specfic category on Tiki website
             Input: url
             Output: info of products, saved as list of dictionary. If no products shown, return empty list.
@@ -213,7 +213,10 @@ class Category:
                     print(e)
     
                 index += 1
-                data.append(Product(self.cat_id, **d))
+                prod = Product(self.cat_id, **d)
+                if save and prod.can_add_to_prod_set(save=save):
+                    prod.save_into_db()
+                data.append(prod)
               
         return data
 
