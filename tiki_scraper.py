@@ -14,7 +14,6 @@ from webdriver_manager.chrome import ChromeDriverManager
 ### GLOBALS ###
 HEADER = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/70.0.3538.77 Safari/537.36'}
 
-# URLS
 MAIN_CATEGORIES = [
     {'Name': 'Điện Thoại - Máy Tính Bảng', 'URL': 'https://tiki.vn/dien-thoai-may-tinh-bang/c1789?src=c.1789.hamburger_menu_fly_out_banner'},
     {'Name': 'Điện Tử - Điện Lạnh', 'URL': 'https://tiki.vn/tivi-thiet-bi-nghe-nhin/c4221?src=c.4221.hamburger_menu_fly_out_banner'}, 
@@ -32,10 +31,55 @@ MAIN_CATEGORIES = [
     {'Name': 'Sách, VPP & Quà Tặng', 'URL': 'https://tiki.vn/nha-sach-tiki/c8322?src=c.8322.hamburger_menu_fly_out_banner'}, 
     {'Name': 'Voucher - Dịch Vụ - Thẻ Cào', 'URL': 'https://tiki.vn/voucher-dich-vu/c11312?src=c.11312.hamburger_menu_fly_out_banner'}]
 
-MAIN_CATEGORIES = MAIN_CATEGORIES[:9]
+MAIN_CATEGORIES = MAIN_CATEGORIES[:3]
+CATEGORY_SET = set()
+PRODUCT_SET = set()
 
 
-### GLOBAL FUNCTIONS ###
+################## GLOBAL FUNCTIONS ##################
+def create_categories_table():
+    query = """
+        CREATE TABLE IF NOT EXISTS categories (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name VARCHAR(255),
+            url TEXT, 
+            parent_id INTEGER, 
+            create_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+    """
+    try:
+        cur.execute(query)
+        conn.commit()
+    except Exception as err:
+        print('ERROR BY CREATE TABLE', err)
+
+def create_products_table():
+    query = """
+        CREATE TABLE IF NOT EXISTS products (
+            ID          INTEGER PRIMARY KEY AUTOINCREMENT,
+            cat_id      INTEGER,
+            Name        VARCHAR(255),
+            Price       INTEGER,
+            URL         TEXT, 
+            Image       TEXT,
+            SKU         INTEGER,
+            Tiki_Now    BOOLEAN,
+            Freeship    BOOLEAN,
+            Review      INTEGER,
+            Rating      FLOAT,
+            Under_Price BOOLEAN,
+            Discount    INTEGER,
+            Installment BOOLEAN,
+            Gift        BOOLEAN,
+            Created_At  TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+    """
+    try:
+        cur.execute(query)
+        conn.commit()
+    except Exception as err:
+        print('ERROR BY CREATE TABLE', err)
+
 def get_url(url):
     """
     Get parsed HTML from url
@@ -59,101 +103,64 @@ def get_url(url):
     driver.close()
     return soup
 
-###### CATEGORY CLASS ######
+def get_lowest_subcat():
+    query = '''
+    
+    SELECT A.id, A.name, A.url
+    FROM Categories A
+        LEFT JOIN Categories B ON A.id = B.parent_id
+    
+        WHERE B.id IS NULL
+    
+    '''
+    return pd.read_sql_query(query, conn)
+
+##################################################################
+######################## CATEGORY CLASS ########################
+##################################################################
+
 class Category:
-    def __init__(self, name, url, parent_id=None, cat_id=None):
+    def __init__(self, Name, URL, cat_id=None, parent_id=None):
+        self.name       = Name
+        self.url        = URL
         self.cat_id     = cat_id
-        self.name       = name
-        self.url        = url
         self.parent_id  = parent_id
 
     def __repr__(self):
         return f"ID: {self.cat_id}, Name: {self.name}, URL: {self.url}, Parent: {self.parent_id}"
+    
+    def __eq__(self,other):
+        return  self.name       == other.name and\
+                self.URL        == other.URL and\
+                self.cat_id     == other.cat_id and\
+                self.parent_id  == other.parent_id
 
-    def save_into_db(self):
-        query = """
-            INSERT INTO categories (name, url, parent_id)
-            VALUES (?, ?, ?);
-        """
-        val = (self.name, self.url, self.parent_id)
-        try:
-            cur.execute(query, val)
-            self.cat_id = cur.lastrowid
-            conn.commit()
-        except Exception as err:
-            print('ERROR BY INSERT:', err)
 
-    def get_page(self, page_num):
-        '''
-        Scrape for products on one page.
-    
-        Input:  url: (string) url of a category
-                page_num: (int) the page number of the category
-        Output: a list of HTML element of each product.
-        '''
-        page_url = self.url + f'page={page_num}'
-        print('Scraping', page_url)
-        product_page = get_url(page_url)
-        
-        tags = [ 'a',
-                { 'class' : 'product-item'} ]
-    
-        products = product_page.find_all(*tags)
-        return products
-    
-    def get_multiple_pages(url, max_page=0):
-        '''
-        Scrape for multiple pages of products of a category.
-        Uses get_page() and get_product_info().
-    
-        Input:  url: (string) a url string of a category
-                max_page: (int) an integer denoting the maximum number of pages to scrape.
-                          Default value is 0 to scrape all pages.
-        Output: a list in which every element is a dictionary of one product's information
-        '''
-        products = []
-    
-        page_n = 1
-        prod_list = get_page(url=url, page_num=page_n)
-    
-        while len(prod_list)>0:
-            products.extend([get_product_info(prod) for prod in prod_list])
-            page_n += 1
-            stop_flag = False if max_page <= 0 else page_n > max_page # For stopping the scrape according to max_page
-            if stop_flag:
-                break
-            prod_list = get_page(url=url, page_num=page_n)
-        
-        return products
+    def can_add_to_cat_set(self,save=False):
+        if self.name not in CATEGORY_SET:
+            if save:
+                CATEGORY_SET.add(self.name)
+                print(f'Added "{self.name}" to CATEGORY_SET')
+            return True
+        return False
 
-###### PRODUCT CLASS ######
-class Product:
-    def __init__(self, cat_id, name, price, product_url, image, tiki_now, freeship, review, under_price, discount, installment, gift, product_sku, rating):
-        self.cat_id      = cat_id
-        self.url         = product_url
-        self.name        = name
-        self.image       = image
-        self.tiki_now    = tiki_now
-        self.freeship    = freeship
-        self.review      = review
-        self.under_price = under_price
-        self.discount    = discount
-        self.installment = installment
-        self.gift        = gift
-        self.product_sku = product_sku
-        self.rating      = rating
 
-    def __repr__(self):
-        return f"Name: {self.name}, SKU: {self.product_sku}, URL: {self.url}, Category: {self.cat_id}"
+    def get_main_cat(self):
+        main_cat_id = re.search(r'src=c\.(\d+)', self.url).group(1)
+        pattern = f'c{main_cat_id}?src=c.{main_cat_id}'
+        for main_cat in MAIN_CATEGORIES:
+            if pattern in main_cat['URL']:
+                return Category(**main_cat)
 
-    def extract_tiki_info(url):
+
+    def get_product_info(self, max_page=0, save=False):
         """ Extract info from all products of a specfic category on Tiki website
             Input: url
             Output: info of products, saved as list of dictionary. If no products shown, return empty list.
         """
         data = []
         index = 1
-        soup = get_url(url)
+        soup = get_url(self.url)
     
         # FIND ALL PRODUCT ITEMS
         products = soup.find_all('a', {'class':'product-item'})
@@ -181,7 +188,7 @@ class Product:
                     if i.find('div',{'class':'review'}):
                         d['review']   = int(i.find('div',{'class':'review'}).text.strip('(').strip(')'))
                     else:
-                        d['review'] = "N/A"
+                        d['review']   = "N/A"
                     
                     d['under_price']  = bool(i.find('div',{'class':'badge-under-price'}).find('div',{'class':'item'}))
     
@@ -200,21 +207,52 @@ class Product:
                     if 'aggregateRating' in dict_content:
                         d['rating']   = float(dict_content['aggregateRating']['ratingValue'])
                     else:
-                      d['rating']     = "N/A"
+                        d['rating']   = "N/A"
     
                 except Exception as e:
                     print(e)
     
                 index += 1
-                data.append(d)
+                prod = Product(self.cat_id, **d)
+                if save and prod.can_add_to_prod_set(save=save):
+                    prod.save_into_db()
+                data.append(prod)
               
         return data
+
+
+    def scrape_tiki(self, max_page=0):
+        base_url = self.url
+
+        result = []
+        page_number = 1
+        main, opt = base_url.split('?')
+        
+        stop_flag = False if max_page <= 0 else page_number > max_page # For stopping the scrape at max_page
+
+        while not stop_flag:
+            page = f'?page={page_number}&'
+            url = main + page + opt
+            print("url =", url)
+            data = get_product_info(url)
+
+            if len(data)>0:
+                result.extend(data)
+            else:
+                break
+
+            page_number += 1
+            sleep(rd.randint(1,2))
+    
+        print("****TOTAL = ",len(result))
+
+
     def save_into_db(self):
         query = """
-            INSERT INTO products (cat_id, url, name, image, tiki_now, freeship, review, under_price, discount, installment, gift, product_sku, rating)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+            INSERT INTO categories (name, url, parent_id)
+            VALUES (?, ?, ?);
         """
-        val = (self.cat_id, self.url, self.name, self.image, self.tiki_now, self.freeship, self.review, self.under_price, self.discount, self.installment, self.gift, self.product_sku, self.rating)
+        val = (self.name, self.url, self.parent_id)
         try:
             cur.execute(query, val)
             self.cat_id = cur.lastrowid
@@ -222,25 +260,72 @@ class Product:
         except Exception as err:
             print('ERROR BY INSERT:', err)
 
+##################################################################
+
+
+##################################################################
+######################## PRODUCT CLASS ########################
+##################################################################
+
+class Product:
+    def __init__(self, cat_id, name, price, product_url, image, product_sku, tiki_now, freeship, review, rating, under_price, discount, installment, gift):
+        self.cat_id      = cat_id
+        self.name        = name
+        self.price       = price
+        self.url         = product_url
+        self.image       = image
+        self.product_sku = product_sku
+        self.tiki_now    = tiki_now
+        self.freeship    = freeship
+        self.review      = review
+        self.rating      = rating
+        self.under_price = under_price
+        self.discount    = discount
+        self.installment = installment
+        self.gift        = gift
+
+    def __repr__(self):
+        return f"Name: {self.name}, SKU: {self.product_sku}, URL: {self.url}, Category: {self.cat_id}"
+
+    def can_add_to_prod_set(self,save=False):
+        if self.product_sku not in PRODUCT_SET:
+            if save:
+                PRODUCT_SET.add(self.product_sku)
+                print(f'Added "{self.product_sku}" to PRODUCT_SET')
+            return True
+        return False
+
+    def save_into_db(self):
+        query = """
+            INSERT INTO products (cat_id, name, price, product_url, image, product_sku, tiki_now, freeship, review, rating, under_price, discount, installment, gift)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+        """
+        val = (self.cat_id, self.name, self.price, self.url, self.image, self.product_sku, self.tiki_now, self.freeship, self.review, self.rating, self.under_price, self.discount, self.installment, self.gift)
+        try:
+            cur.execute(query, val)
+            self.cat_id = cur.lastrowid
+            conn.commit()
+        except Exception as err:
+            print('ERROR BY INSERT:', err)
+
+##################################################################
 
 
 
 
 
 
-# to_csv function
-def make_csv(my_url = URL_INTERNATIONAL_GOODS, num_max_page = 5, name='tiki_products_data_table.csv'):
-    prod_data = get_multiple_pages(url=my_url, max_page=num_max_page)
-    df = pd.DataFrame(data=prod_data, columns=prod_data[0].keys())
-    df.to_csv(name)
+####################################################################
+############################### MAIN ###############################
+####################################################################
 
-
-### Check if this script is run by itself (compared to being imported)
 if __name__ == '__main__':
-    num_max_page = 5
-    my_url = URL_INTERNATIONAL_GOODS
+    db_path = './tiki_2.db'
 
-    prod_data = get_multiple_pages(url=my_url, max_page=num_max_page)
-    df = pd.DataFrame(data=prod_data, columns=prod_data[0].keys())
-    df.to_csv('tiki_products_data_table.csv')
+    conn = sqlite3.connect(db_path)
+    cur = conn.cursor()
+    
+    # Do database stuff here
 
+
+    conn.close()
