@@ -1,20 +1,24 @@
-# The following includes a couple of screenshots on the data from the **international goods** section from Tiki.vn
+# Plans
 
-We scraped **246 products** in total.
+### Minh
 
-These are the highest and lowest prices respectively:
-![highest and lowest prices](https://github.com/Nanakuro/tiki-product-scraping/blob/master/images/prices.png)
+[{'Name': 'Điện Thoại - Máy Tính Bảng', 'URL': 'https://tiki.vn/dien-thoai-may-tinh-bang/c1789?src=c.1789.hamburger_menu_fly_out_banner'},
+{'Name': 'Điện Tử - Điện Lạnh', 'URL': 'https://tiki.vn/tivi-thiet-bi-nghe-nhin/c4221?src=c.4221.hamburger_menu_fly_out_banner'},
+{'Name': 'Phụ Kiện - Thiết Bị Số', 'URL': 'https://tiki.vn/thiet-bi-kts-phu-kien-so/c1815?src=c.1815.hamburger_menu_fly_out_banner'},
+{'Name': 'Laptop - Thiết bị IT', 'URL': 'https://tiki.vn/laptop-may-vi-tinh/c1846?src=c.1846.hamburger_menu_fly_out_banner'},
+{'Name': 'Máy Ảnh - Quay Phim', 'URL': 'https://tiki.vn/may-anh/c1801?src=c.1801.hamburger_menu_fly_out_banner'},
+{'Name': 'Điện Gia Dụng', 'URL': 'https://tiki.vn/dien-gia-dung/c1882?src=c.1882.hamburger_menu_fly_out_banner'},
+{'Name': 'Nhà Cửa Đời Sống', 'URL': 'https://tiki.vn/nha-cua-doi-song/c1883?src=c.1883.hamburger_menu_fly_out_banner'},
+{'Name': 'Hàng Tiêu Dùng - Thực Phẩm', 'URL': 'https://tiki.vn/bach-hoa-online/c4384?src=c.4384.hamburger_menu_fly_out_banner'}
 
-This is the average price:
-![average price](https://github.com/Nanakuro/tiki-product-scraping/blob/master/images/avg_price.png)
+---
 
-This is the product with the most reviews:\
-![Xiaomi Jordan](https://salt.tikicdn.com/cache/280x280/ts/product/c4/f5/02/3ef8400785c0580626a54a2f74a0d601.jpg)
-![most reviews](https://github.com/Nanakuro/tiki-product-scraping/blob/master/images/reviews.png)
+### Steph
 
-This is the product with the highest rating (notice how there's only one review):
-![vacuum](https://salt.tikicdn.com/cache/280x280/ts/product/94/93/72/488aef44864e8ec9ce176a47f834d903.jpg)
-![highest rating](https://github.com/Nanakuro/tiki-product-scraping/blob/master/images/rating.png)
-
-This scatter plot that compares rating with price.
-![scatterplot](https://github.com/Nanakuro/tiki-product-scraping/blob/master/images/scatterplot.png)
+{'Name': 'Đồ chơi, Mẹ & Bé', 'URL': 'https://tiki.vn/me-va-be/c2549?src=c.2549.hamburger_menu_fly_out_banner'},
+{'Name': 'Làm Đẹp - Sức Khỏe', 'URL': 'https://tiki.vn/lam-dep-suc-khoe/c1520?src=c.1520.hamburger_menu_fly_out_banner'},
+{'Name': 'Thể Thao - Dã Ngoại', 'URL': 'https://tiki.vn/the-thao/c1975?src=c.1975.hamburger_menu_fly_out_banner'},
+{'Name': 'Xe Máy, Ô tô, Xe Đạp', 'URL': 'https://tiki.vn/o-to-xe-may-xe-dap/c8594?src=c.8594.hamburger_menu_fly_out_banner'},
+{'Name': 'Hàng quốc tế', 'URL': 'https://tiki.vn/hang-quoc-te/c17166?src=c.17166.hamburger_menu_fly_out_banner'},
+{'Name': 'Sách, VPP & Quà Tặng', 'URL': 'https://tiki.vn/nha-sach-tiki/c8322?src=c.8322.hamburger_menu_fly_out_banner'},
+{'Name': 'Voucher - Dịch Vụ - Thẻ Cào', 'URL': 'https://tiki.vn/voucher-dich-vu/c11312?src=c.11312.hamburger_menu_fly_out_banner'}]
