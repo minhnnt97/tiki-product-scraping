@@ -4,6 +4,7 @@ import time
 import re
 import json
 import sqlite3
+import numpy as np
 import random as rd
 import pandas as pd
 from bs4 import BeautifulSoup as bs
@@ -109,7 +110,7 @@ def get_url(url):
 def get_lowest_subcat(conn):
     query = '''
     
-    SELECT A.id, A.name, A.url
+    SELECT A.name, A.url, A.id, A.parent_id
     FROM Categories A
         LEFT JOIN Categories B ON A.id = B.parent_id
     
@@ -235,7 +236,7 @@ class Category:
                 try:
                     d['name']         = i.find('div',{'class' : 'name'}).text
                     d['price']        = int(re.sub('[. ₫]','', i.find('div',{'class':'price-discount__price'}).text))
-                    d['product_url']  = 'https://tiki.vn' + i['href'] 
+                    d['product_url']  = 'https:'+i['href'] if i['href'][:2]=='//' else 'https://tiki.vn'+i['href'] 
                     thumbnail         = i.find('div',{'class':'thumbnail'})
                     d['image']        = thumbnail.img['src']        
                     d['tiki_now']     = bool(i.find('div',{'class':'badge-service'}).find('div',{'class':'item'})) 
@@ -303,8 +304,8 @@ class Category:
         print("****TOTAL = ",len(result))
 
     @staticmethod
-    def scrape_all_categories(conn, cur, save=False, max_page=0):
-        for cat in Category.CATEGORY_SET:
+    def scrape_all_categories(cat_list, conn, cur, save=False, max_page=0):
+        for cat in cat_list:
             cat.scrape_all_products(conn, cur, save=save, max_page=max_page)
 
     def save_into_db(self, conn, cur):

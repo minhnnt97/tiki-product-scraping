@@ -1,7 +1,7 @@
 from tiki_scraper import *
 
 ### MAIN CATEGORIES ###
-MAIN_CATEGORIES = [
+MAIN_CATS = [
     {'Name': 'Điện Thoại - Máy Tính Bảng', 'URL': 'https://tiki.vn/dien-thoai-may-tinh-bang/c1789?src=c.1789.hamburger_menu_fly_out_banner'},
     {'Name': 'Điện Tử - Điện Lạnh', 'URL': 'https://tiki.vn/tivi-thiet-bi-nghe-nhin/c4221?src=c.4221.hamburger_menu_fly_out_banner'},
     {'Name': 'Phụ Kiện - Thiết Bị Số', 'URL': 'https://tiki.vn/thiet-bi-kts-phu-kien-so/c1815?src=c.1815.hamburger_menu_fly_out_banner'},
@@ -18,39 +18,51 @@ MAIN_CATEGORIES = [
     {'Name': 'Sách, VPP & Quà Tặng', 'URL': 'https://tiki.vn/nha-sach-tiki/c8322?src=c.8322.hamburger_menu_fly_out_banner'},
     {'Name': 'Voucher - Dịch Vụ - Thẻ Cào', 'URL': 'https://tiki.vn/voucher-dich-vu/c11312?src=c.11312.hamburger_menu_fly_out_banner'}]
 
-limit = 3
-MAIN_CATEGORIES = MAIN_CATEGORIES[:limit]
-RESET_FLAG = True
-DB_PATH = './tiki_data.db'
+CAT_LIMIT = 3
+MAIN_CATS = MAIN_CATS[:CAT_LIMIT]
+
+
+### GLOBALS ###
+SAVE_FLAG   = False
+RESET_FLAG  = False
+RUN_FLAG    = False
+
+DB_PATH     = './tiki_data.db'
+MAX_PAGE    = 2
 
 conn = sqlite3.connect(DB_PATH)
 cur = conn.cursor()
 
-# Create database:
-if RESET_FLAG:
-    drop_table('categories', conn, cur)
-    drop_table('products', conn, cur)
-
-create_categories_table(conn,cur)
-create_products_table(conn, cur)
-
-# Set scrape settings
-save_to_db = True
-num_max_page = 2
 
 
-
-
+######################
 ### BEGIN SCRAPING ###
+######################
 
-# Add main categories to CATEGORY_SET
-Category.get_main_categories(MAIN_CATEGORIES, conn, cur, save=save_to_db)
+if RUN_FLAG:
+    # Create database:
+    if RESET_FLAG:
+        drop_table('categories', conn, cur)
+        drop_table('products', conn, cur)
+    
+        create_categories_table(conn,cur)
+        create_products_table(conn, cur)
 
-# Get all categories from CATEGORY_SET and their sub-categories
-Category.get_all_categories(conn, cur, save=save_to_db)
+    # Add main categories to CATEGORY_SET
+    Category.get_main_categories(MAIN_CATEGORIES, conn, cur, save=save_to_db)
+    
+    # Get all categories from CATEGORY_SET and their sub-categories
+    Category.get_all_categories(conn, cur, save=save_to_db)
+    
+    # Get lowest sub-categories from the (sub-)categories we have
+    lowest_sub_cats = [Category(*sub_cat_info) for sub_cat_info in get_lowest_subcat(conn).to_numpy()]
 
-# Scrape all products from all categories we just got above
-Category.scrape_all_categories(conn, cur, save=save_to_db, max_page=num_max_page)
+    # Scrape all products from all categories we just got above
+    Category.scrape_all_categories(lowest_sub_cats, conn, cur, save=save_to_db, max_page=num_max_page)
+
+    print('Script finished.')
+
+else:
+    print('RUN_FLAG was set to False.')
 
 conn.close()
-print('Script finished.')
