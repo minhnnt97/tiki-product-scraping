@@ -31,13 +31,12 @@ MAIN_CATEGORIES = [
     {'Name': 'Sách, VPP & Quà Tặng', 'URL': 'https://tiki.vn/nha-sach-tiki/c8322?src=c.8322.hamburger_menu_fly_out_banner'}, 
     {'Name': 'Voucher - Dịch Vụ - Thẻ Cào', 'URL': 'https://tiki.vn/voucher-dich-vu/c11312?src=c.11312.hamburger_menu_fly_out_banner'}]
 
-MAIN_CATEGORIES = MAIN_CATEGORIES[:3]
-CATEGORY_SET = set()
-PRODUCT_SET = set()
+limit = 3
+MAIN_CATEGORIES = MAIN_CATEGORIES[:limit]
 
 
 ################## GLOBAL FUNCTIONS ##################
-def create_categories_table():
+def create_categories_table(conn, cur):
     query = """
         CREATE TABLE IF NOT EXISTS categories (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -53,7 +52,7 @@ def create_categories_table():
     except Exception as err:
         print('ERROR BY CREATE TABLE', err)
 
-def create_products_table():
+def create_products_table(conn, cur):
     query = """
         CREATE TABLE IF NOT EXISTS products (
             ID          INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -80,6 +79,11 @@ def create_products_table():
     except Exception as err:
         print('ERROR BY CREATE TABLE', err)
 
+def drop_table(table_name, conn, cur):
+    print(f'Dropping table {table_name} from database...')
+    cur.execute(f'DROP TABLE {table_name};')
+    conn.commit()
+
 def get_url(url):
     """
     Get parsed HTML from url
@@ -96,14 +100,13 @@ def get_url(url):
 
     driver = webdriver.Chrome('chromedriver',options=options)
     driver.implicitly_wait(30)
-    time.sleep(rd.randint(4,6)) # Not sure if this line is needed anymore
     driver.get(url)
     
     soup = bs(driver.page_source,'html.parser')
     driver.close()
     return soup
 
-def get_lowest_subcat():
+def get_lowest_subcat(conn):
     query = '''
     
     SELECT A.id, A.name, A.url
@@ -120,6 +123,8 @@ def get_lowest_subcat():
 ##################################################################
 
 class Category:
+    CATEGORY_SET = set()
+
     def __init__(self, Name, URL, cat_id=None, parent_id=None):
         self.name       = Name
         self.url        = URL
@@ -131,15 +136,20 @@ class Category:
     
     def __eq__(self,other):
         return  self.name       == other.name and\
-                self.URL        == other.URL and\
+                self.url        == other.url and\
                 self.cat_id     == other.cat_id and\
                 self.parent_id  == other.parent_id
 
+    def __ne__(self,other):
+        return not self.__eq__(other)
+
+    def __hash__(self):
+        return hash((self.name, self.url))
 
     def can_add_to_cat_set(self,save=False):
-        if self.name not in CATEGORY_SET:
+        if self not in Category.CATEGORY_SET:
             if save:
-                CATEGORY_SET.add(self.name)
+                Category.CATEGORY_SET.add(self)
                 print(f'Added "{self.name}" to CATEGORY_SET')
             return True
         return False
@@ -153,7 +163,53 @@ class Category:
                 return Category(**main_cat)
 
 
-    def get_product_info(self, max_page=0, save=False):
+    def get_sub_cat(self,conn,cur, save=False):
+        parent_url = self.url
+        result = []
+    
+        try:
+            soup = get_url(parent_url)
+            sub_cat_list = soup.find_all('a', class_='item item--category')
+            for a in sub_cat_list:
+                name = a.text.strip()
+                sub_url = a['href']
+                cat = Category(name, sub_url, parent_id=self.cat_id) # parent_id is cat_id of parent category
+
+                if cat.can_add_to_cat_set(save=save) and save:
+                    cat.save_into_db(conn, cur)
+
+                result.append(cat)
+
+        except Exception as err:
+            print('ERROR IN GETTING SUB CATEGORIES:', err)
+        return result
+
+
+    @staticmethod
+    def get_main_categories(main_categories,conn,cur, save=False):
+        for i in main_categories:
+            main_cat = Category(i['Name'],i['URL'])
+            _=main_cat.can_add_to_cat_set(save=save)
+
+            if save:
+                main_cat.save_into_db(conn,cur)
+
+    @staticmethod
+    def get_all_categories(conn, cur, save=False):
+        categories = list(Category.CATEGORY_SET)
+        while len(categories):
+            cat_to_crawl = categories[0]
+
+            print(f'Getting sub-categories of {cat_to_crawl}...')
+            sub_categories = cat_to_crawl.get_sub_cat(conn, cur, save=save)
+
+            print(f'Finished! {cat_to_crawl.name} has {len(sub_categories)} sub-categories')
+            categories += sub_categories
+
+            del categories[0]
+
+
+    def get_product_info(self,conn,cur, save=False):
         """ Extract info from all products of a specfic category on Tiki website
             Input: url
             Output: info of products, saved as list of dictionary. If no products shown, return empty list.
@@ -201,7 +257,7 @@ class Category:
                     d['gift']         = bool(i.find('div',{'class':'freegift-list'}))
     
                     script = all_script[index]
-                    dict_content = json.loads(script.text)
+                    dict_content = json.loads(script.string)
                     d['product_sku']  = dict_content['sku']
                     
                     if 'aggregateRating' in dict_content:
@@ -215,39 +271,43 @@ class Category:
                 index += 1
                 prod = Product(self.cat_id, **d)
                 if save and prod.can_add_to_prod_set(save=save):
-                    prod.save_into_db()
+                    prod.save_into_db(conn, cur)
                 data.append(prod)
               
         return data
 
 
-    def scrape_tiki(self, max_page=0):
+    def scrape_all_products(self,conn,cur, save=False, max_page=0):
         base_url = self.url
 
         result = []
         page_number = 1
         main, opt = base_url.split('?')
         
-        stop_flag = False if max_page <= 0 else page_number > max_page # For stopping the scrape at max_page
 
-        while not stop_flag:
+        while True:
             page = f'?page={page_number}&'
             url = main + page + opt
             print("url =", url)
-            data = get_product_info(url)
+            data = self.get_product_info(conn, cur, save=save)
 
-            if len(data)>0:
-                result.extend(data)
-            else:
+            stop_flag = False if max_page <= 0 else page_number > max_page # For stopping the scrape at max_page
+            if stop_flag or len(data)<=0:
                 break
 
+            result.extend(data)
+
             page_number += 1
-            sleep(rd.randint(1,2))
+            time.sleep(rd.randint(1,2))
     
         print("****TOTAL = ",len(result))
 
+    @staticmethod
+    def scrape_all_categories(conn, cur, save=False, max_page=0):
+        for cat in Category.CATEGORY_SET:
+            cat.scrape_all_products(conn, cur, save=save, max_page=max_page)
 
-    def save_into_db(self):
+    def save_into_db(self, conn, cur):
         query = """
             INSERT INTO categories (name, url, parent_id)
             VALUES (?, ?, ?);
@@ -268,6 +328,8 @@ class Category:
 ##################################################################
 
 class Product:
+    PRODUCT_SET = set()
+
     def __init__(self, cat_id, name, price, product_url, image, product_sku, tiki_now, freeship, review, rating, under_price, discount, installment, gift):
         self.cat_id      = cat_id
         self.name        = name
@@ -287,17 +349,26 @@ class Product:
     def __repr__(self):
         return f"Name: {self.name}, SKU: {self.product_sku}, URL: {self.url}, Category: {self.cat_id}"
 
+    def __eq__(self,other):
+        return self.product_sku == other.product_sku
+
+    def __ne__(self,other):
+        return not self.__eq__(other)
+
+    def __hash__(self):
+        return hash((self.product_sku))
+
     def can_add_to_prod_set(self,save=False):
-        if self.product_sku not in PRODUCT_SET:
+        if self not in Product.PRODUCT_SET:
             if save:
-                PRODUCT_SET.add(self.product_sku)
+                Product.PRODUCT_SET.add(self)
                 print(f'Added "{self.product_sku}" to PRODUCT_SET')
             return True
         return False
 
-    def save_into_db(self):
+    def save_into_db(self,conn,cur):
         query = """
-            INSERT INTO products (cat_id, name, price, product_url, image, product_sku, tiki_now, freeship, review, rating, under_price, discount, installment, gift)
+            INSERT INTO products (cat_id, Name, Price, URL, Image, SKU, Tiki_Now, Freeship, Review, Rating, Under_Price, Discount, Installment, Gift)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
         """
         val = (self.cat_id, self.name, self.price, self.url, self.image, self.product_sku, self.tiki_now, self.freeship, self.review, self.rating, self.under_price, self.discount, self.installment, self.gift)
@@ -320,12 +391,4 @@ class Product:
 ####################################################################
 
 if __name__ == '__main__':
-    db_path = './tiki_2.db'
-
-    conn = sqlite3.connect(db_path)
-    cur = conn.cursor()
-    
-    # Do database stuff here
-
-
-    conn.close()
+    pass
