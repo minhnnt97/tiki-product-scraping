@@ -1,24 +1,32 @@
-# Plans
+# Tiki Scraping Part 2
 
-### Minh
+## We scraped: phone/tablet, electronic refrigeration, accessories - digital equipment, laptop, and books
 
-[{'Name': 'Điện Thoại - Máy Tính Bảng', 'URL': 'https://tiki.vn/dien-thoai-may-tinh-bang/c1789?src=c.1789.hamburger_menu_fly_out_banner'},
-{'Name': 'Điện Tử - Điện Lạnh', 'URL': 'https://tiki.vn/tivi-thiet-bi-nghe-nhin/c4221?src=c.4221.hamburger_menu_fly_out_banner'},
-{'Name': 'Phụ Kiện - Thiết Bị Số', 'URL': 'https://tiki.vn/thiet-bi-kts-phu-kien-so/c1815?src=c.1815.hamburger_menu_fly_out_banner'},
-{'Name': 'Laptop - Thiết bị IT', 'URL': 'https://tiki.vn/laptop-may-vi-tinh/c1846?src=c.1846.hamburger_menu_fly_out_banner'},
-{'Name': 'Máy Ảnh - Quay Phim', 'URL': 'https://tiki.vn/may-anh/c1801?src=c.1801.hamburger_menu_fly_out_banner'},
-{'Name': 'Điện Gia Dụng', 'URL': 'https://tiki.vn/dien-gia-dung/c1882?src=c.1882.hamburger_menu_fly_out_banner'},
-{'Name': 'Nhà Cửa Đời Sống', 'URL': 'https://tiki.vn/nha-cua-doi-song/c1883?src=c.1883.hamburger_menu_fly_out_banner'},
-{'Name': 'Hàng Tiêu Dùng - Thực Phẩm', 'URL': 'https://tiki.vn/bach-hoa-online/c4384?src=c.4384.hamburger_menu_fly_out_banner'}
+### LAPTOP
 
----
+#### MOST EXPENSIVE
 
-### Steph
+Máy Photocopy Fuji Xerox Màu DocuCentre-VI C2271/C3370/C3371 - Hàng Chính Hãng
+(145,000,000 VND)
+![Printer](https://salt.tikicdn.com/cache/280x280/ts/product/b3/0c/6a/d58b75d03be0863b76c812aa7148746e.PNG)
 
-{'Name': 'Đồ chơi, Mẹ & Bé', 'URL': 'https://tiki.vn/me-va-be/c2549?src=c.2549.hamburger_menu_fly_out_banner'},
-{'Name': 'Làm Đẹp - Sức Khỏe', 'URL': 'https://tiki.vn/lam-dep-suc-khoe/c1520?src=c.1520.hamburger_menu_fly_out_banner'},
-{'Name': 'Thể Thao - Dã Ngoại', 'URL': 'https://tiki.vn/the-thao/c1975?src=c.1975.hamburger_menu_fly_out_banner'},
-{'Name': 'Xe Máy, Ô tô, Xe Đạp', 'URL': 'https://tiki.vn/o-to-xe-may-xe-dap/c8594?src=c.8594.hamburger_menu_fly_out_banner'},
-{'Name': 'Hàng quốc tế', 'URL': 'https://tiki.vn/hang-quoc-te/c17166?src=c.17166.hamburger_menu_fly_out_banner'},
-{'Name': 'Sách, VPP & Quà Tặng', 'URL': 'https://tiki.vn/nha-sach-tiki/c8322?src=c.8322.hamburger_menu_fly_out_banner'},
-{'Name': 'Voucher - Dịch Vụ - Thẻ Cào', 'URL': 'https://tiki.vn/voucher-dich-vu/c11312?src=c.11312.hamburger_menu_fly_out_banner'}]
+### BOOKS
+
+#### MOST EXPENSIVE
+
+AdCombo Thám Tử Lừng Danh Conan (Trọn Bộ 95 Tập) - Tái Bản
+(1,842,900 VND)
+![Conan boxset](https://salt.tikicdn.com/cache/280x280/ts/product/8c/5a/f3/0912bc3aad24fd7c0fe6f153e9e1bfe3.jpg)
+
+#### MOST REVIEWED
+
+Thám Tử Lừng Danh Conan - Tập 98
+(1152 reviews)
+![Conan book 98](https://salt.tikicdn.com/cache/280x280/ts/product/6d/61/45/4d4166c4fee360442889f320c84a12c5.jpg)
+
+## What we learned
+
+- not all websites (especially tiki) follow good naming conventions
+- always read through the code you're using carefully before running it
+- print() helps a lot with debugging
+- check if errors are because of policy changes
