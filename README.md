@@ -1,6 +1,6 @@
 # Tiki Scraping Part 2
 
-## We scraped: phone/tablet, electronic appliances, accessories - digital equipment, laptop, and books
+## We scraped: phone/tablet, electronic appliances, accessories - digital equipment, laptop, and books (23,050 products)
 
 ### LAPTOP
 
