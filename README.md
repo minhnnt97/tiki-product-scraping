@@ -1,6 +1,6 @@
 # Tiki Scraping Part 2
 
-## We scraped: phone/tablet, electronic refrigeration, accessories - digital equipment, laptop, and books
+## We scraped: phone/tablet, electronic appliances, accessories - digital equipment, laptop, and books
 
 ### LAPTOP
 
@@ -24,9 +24,27 @@ Thám Tử Lừng Danh Conan - Tập 98
 (1152 reviews)
 ![Conan book 98](https://salt.tikicdn.com/cache/280x280/ts/product/6d/61/45/4d4166c4fee360442889f320c84a12c5.jpg)
 
+
+### APPLIANCES
+
+#### MOST EXPENSIVE
+
+Android Tivi Sharp 8K 80 inch 8T-80AX1X
+(356,390,000 VND)
+![Tivi 8K](https://salt.tikicdn.com/cache/280x280/ts/product/e5/23/fb/46452531ea1eb62a506d21f4d18b295a.jpg)
+
+
+### ELECTRONIC ACCESSORIES
+
+#### MOST REVIEWED
+
+Chuột Không Dây Logitech M331 Silent - Hàng Chính Hãng
+(4189 Reviews)
+![Logitech Wireless Mouse](https://salt.tikicdn.com/cache/280x280/media/catalog/product/m/3/m331red_0.u2470.d20161215.t105811.181375.jpg)
+
 ## What we learned
 
 - not all websites (especially tiki) follow good naming conventions
 - always read through the code you're using carefully before running it
-- print() helps a lot with debugging
+- print everything, everywhere - helps a lot with debugging
 - check if errors are because of policy changes
